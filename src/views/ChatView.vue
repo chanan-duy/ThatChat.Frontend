@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
-import { useChatStore } from '@/stores/chatStore'
-import { auth } from '@/services/authService'
-import { toast } from 'vue-sonner'
-
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-
-import { SendHorizontal, Paperclip, LogOut, FileIcon, X } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { auth } from '@/services/authService'
+import { useChatStore } from '@/stores/chatStore'
+import { FileIcon, LogOut, Paperclip, PlusIcon, SendHorizontal, X } from 'lucide-vue-next'
+import { nextTick, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 
 const router = useRouter()
 const store = useChatStore()
@@ -23,6 +31,9 @@ const selectedFile = ref<File | null>(null)
 const messagesEndRef = ref<HTMLDivElement | null>(null)
 
 const myEmail = localStorage.getItem('userEmail') || ''
+
+const isCreateChatOpen = ref(false)
+const newChatEmail = ref('')
 
 onMounted(async () => {
 	if (!auth.isLoggedIn.value) {
@@ -66,7 +77,7 @@ async function handleSendMessage() {
 
 		scrollToBottom()
 	} catch (e) {
-		console.error(e) // Логируем ошибку, чтобы ESLint не ругался
+		console.error(e)
 		toast.error('Не удалось отправить сообщение')
 	}
 }
@@ -74,7 +85,6 @@ async function handleSendMessage() {
 function handleFileSelect(event: Event) {
 	const target = event.target as HTMLInputElement
 	if (target.files && target.files.length > 0) {
-		// TS Fix: явно приводим к File или null, так как индекс может вернуть undefined
 		selectedFile.value = target.files[0] || null
 	}
 }
@@ -84,12 +94,25 @@ function removeFile() {
 	if (fileInput.value) fileInput.value.value = ''
 }
 
+async function handleCreateChat() {
+	if (!newChatEmail.value) return
+
+	try {
+		await store.createPrivateChat(newChatEmail.value)
+		isCreateChatOpen.value = false
+		newChatEmail.value = ''
+		toast.success('Чат создан')
+	} catch (e) {
+		console.error(e)
+		toast.error('Ошибка. Пользователь не найден?')
+	}
+}
+
 function handleLogout() {
 	auth.logout()
 	router.push('/login')
 }
 
-// Открытие файла в новой вкладке (fix для шаблона)
 function openFile(url: string) {
 	window.open(url, '_blank')
 }
@@ -109,9 +132,42 @@ function formatTime(dateStr: string) {
 		<aside class="w-80 border-r flex flex-col bg-muted/10">
 			<div class="p-4 border-b flex items-center justify-between">
 				<h2 class="font-semibold text-lg">Чаты</h2>
-				<Button variant="ghost" size="icon" @click="handleLogout" title="Выйти">
-					<LogOut class="w-5 h-5 text-muted-foreground hover:text-destructive" />
-				</Button>
+
+				<div class="flex gap-1">
+					<Dialog v-model:open="isCreateChatOpen">
+						<DialogTrigger as-child>
+							<Button variant="ghost" size="icon" title="Создать чат">
+								<PlusIcon class="w-5 h-5 text-muted-foreground hover:text-primary" />
+							</Button>
+						</DialogTrigger>
+						<DialogContent class="sm:max-w-[425px]">
+							<DialogHeader>
+								<DialogTitle>Новый чат</DialogTitle>
+								<DialogDescription>
+									Введите Email пользователя для начала общения.
+								</DialogDescription>
+							</DialogHeader>
+							<div class="grid gap-4 py-4">
+								<div class="grid gap-2">
+									<Label for="email">Email собеседника</Label>
+									<Input
+										id="email"
+										v-model="newChatEmail"
+										placeholder="friend@example.com"
+										@keyup.enter="handleCreateChat"
+									/>
+								</div>
+							</div>
+							<DialogFooter>
+								<Button type="submit" @click="handleCreateChat">Начать общение</Button>
+							</DialogFooter>
+						</DialogContent>
+					</Dialog>
+
+					<Button variant="ghost" size="icon" @click="handleLogout" title="Выйти">
+						<LogOut class="w-5 h-5 text-muted-foreground hover:text-destructive" />
+					</Button>
+				</div>
 			</div>
 
 			<ScrollArea class="flex-1">
@@ -165,7 +221,7 @@ function formatTime(dateStr: string) {
 				class="flex-1 flex items-center justify-center text-muted-foreground flex-col gap-2"
 			>
 				<div class="text-4xl">👋</div>
-				<p>Выберите чат, чтобы начать общение</p>
+				<p>Выберите чат или создайте новый</p>
 			</div>
 
 			<ScrollArea v-if="store.activeChat" class="flex-1 p-4">

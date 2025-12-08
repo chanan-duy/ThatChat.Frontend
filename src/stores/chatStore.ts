@@ -1,8 +1,8 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { HubConnectionBuilder, HubConnection, LogLevel } from '@microsoft/signalr'
 import { api, type ChatDto, type MessageDto } from '@/services/apiService'
 import { auth } from '@/services/authService'
+import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 
 export const useChatStore = defineStore('chat', () => {
 	const chats = ref<ChatDto[]>([])
@@ -98,6 +98,23 @@ export const useChatStore = defineStore('chat', () => {
 		}
 	}
 
+	async function createPrivateChat(email: string) {
+		try {
+			const newChat = await api.createChat(email)
+
+			const exists = chats.value.find((c) => c.id === newChat.id)
+			if (!exists) {
+				chats.value.push(newChat)
+			}
+
+			await selectChat(newChat.id)
+			return true
+		} catch (e) {
+			console.error(e)
+			throw e
+		}
+	}
+
 	return {
 		chats,
 		activeChatId,
@@ -107,5 +124,6 @@ export const useChatStore = defineStore('chat', () => {
 		init,
 		selectChat,
 		sendMessage,
+		createPrivateChat,
 	}
 })

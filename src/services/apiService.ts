@@ -31,6 +31,11 @@ export class ApiService {
 		return data
 	}
 
+	public async createChat(email: string): Promise<ChatDto> {
+		const { data } = await this.ax.post<ChatDto>('/chats', { email })
+		return data
+	}
+
 	public async getChatMessages(chatId: string): Promise<MessageDto[]> {
 		const { data } = await this.ax.get<MessageDto[]>(`/chats/${chatId}/messages`)
 		return data
