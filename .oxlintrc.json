@@ -1,3 +1,3 @@
 {
-  "ignorePatterns": ["app/components/ui/**/*"]
+  "ignorePatterns": ["src/components/ui/**/*"]
 }
