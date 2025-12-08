@@ -1,11 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { auth } from '@/services/authService'
-import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
 	Card,
 	CardContent,
@@ -14,6 +8,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { auth } from '@/services/authService'
+import { Loader2 } from 'lucide-vue-next'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 
 const email = ref('')
 const password = ref('')
@@ -56,33 +57,55 @@ async function handleRegister() {
 </script>
 
 <template>
-	<div class="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4">
-		<Card class="w-full max-w-md shadow-lg border-zinc-200 dark:border-zinc-800">
+	<div class="flex min-h-screen items-center justify-center bg-background p-4 text-foreground">
+		<Card class="w-full max-w-md border-border shadow-lg">
 			<CardHeader>
-				<CardTitle class="text-2xl text-center font-bold">Регистрация</CardTitle>
-				<CardDescription class="text-center">Создайте аккаунт в ThatChat</CardDescription>
+				<CardTitle class="text-center text-2xl font-bold">Регистрация</CardTitle>
+				<CardDescription class="text-center">Создание аккаунта</CardDescription>
 			</CardHeader>
-			<CardContent class="grid gap-4">
-				<div class="grid gap-2">
-					<Label for="email">Email</Label>
-					<Input id="email" type="email" placeholder="name@example.com" v-model="email" />
-				</div>
-				<div class="grid gap-2">
-					<Label for="password">Пароль</Label>
-					<Input id="password" type="password" v-model="password" />
-				</div>
-			</CardContent>
-			<CardFooter class="flex flex-col gap-2">
-				<Button class="w-full" @click="handleRegister" :disabled="isLoading">
-					{{ isLoading ? 'Создаем...' : 'Зарегистрироваться' }}
-				</Button>
-				<div class="text-center text-sm text-muted-foreground">
-					Уже есть аккаунт?
-					<RouterLink to="/login" class="underline hover:text-primary transition-colors"
-						>Войти</RouterLink
-					>
-				</div>
-			</CardFooter>
+
+			<form @submit.prevent="handleRegister" class="flex flex-col gap-6">
+				<CardContent class="grid gap-4">
+					<div class="grid gap-2">
+						<Label for="email">Email</Label>
+						<Input
+							id="email"
+							type="email"
+							placeholder="name@example.com"
+							v-model="email"
+							:disabled="isLoading"
+							required
+						/>
+					</div>
+					<div class="grid gap-2">
+						<Label for="password">Пароль</Label>
+						<Input
+							id="password"
+							type="password"
+							v-model="password"
+							:disabled="isLoading"
+							required
+						/>
+					</div>
+				</CardContent>
+
+				<CardFooter class="flex flex-col gap-4">
+					<Button class="w-full" type="submit" :disabled="isLoading">
+						<Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
+						{{ isLoading ? 'Создаем...' : 'Зарегистрироваться' }}
+					</Button>
+
+					<div class="text-center text-sm text-muted-foreground">
+						Уже есть аккаунт?
+						<RouterLink
+							to="/login"
+							class="underline underline-offset-4 hover:text-primary transition-colors"
+						>
+							Войти
+						</RouterLink>
+					</div>
+				</CardFooter>
+			</form>
 		</Card>
 	</div>
 </template>

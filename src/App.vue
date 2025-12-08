@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
 import { Toaster } from '@/components/ui/sonner'
+import { RouterView } from 'vue-router'
+import 'vue-sonner/style.css'
 </script>
 
 <template>
-	<RouterView />
+	<div>
+		<RouterView />
 
-	<Toaster />
+		<Toaster />
+	</div>
 </template>

@@ -15,23 +15,32 @@ import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { auth } from '@/services/authService'
 import { useChatStore } from '@/stores/chatStore'
-import { FileIcon, LogOut, Paperclip, PlusIcon, SendHorizontal, X } from 'lucide-vue-next'
+import {
+	AudioWaveformIcon,
+	Download,
+	FileIcon,
+	LogOut,
+	Paperclip,
+	PlusIcon,
+	SendHorizontal,
+	X,
+} from 'lucide-vue-next'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 const router = useRouter()
 const store = useChatStore()
-
 const apiUrl = import.meta.env.VITE_API_URL
 
 const messageText = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
+
 const messagesEndRef = ref<HTMLDivElement | null>(null)
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
 const myEmail = localStorage.getItem('userEmail') || ''
-
 const isCreateChatOpen = ref(false)
 const newChatEmail = ref('')
 
@@ -56,13 +65,34 @@ watch(
 	async () => {
 		selectedFile.value = null
 		messageText.value = ''
+		resizeTextarea()
 		await nextTick()
-		scrollToBottom()
+		scrollToBottom(false)
 	},
 )
 
-function scrollToBottom() {
-	messagesEndRef.value?.scrollIntoView({ behavior: 'smooth' })
+function scrollToBottom(smooth = true) {
+	if (!messagesEndRef.value) return
+
+	messagesEndRef.value.scrollIntoView({
+		behavior: smooth ? 'smooth' : 'instant',
+		block: 'end',
+	})
+}
+
+function handleImageLoad() {
+	scrollToBottom()
+}
+
+function resizeTextarea() {
+	if (textareaRef.value) {
+		textareaRef.value.style.height = 'auto'
+		textareaRef.value.style.height = `${Math.min(textareaRef.value.scrollHeight, 150)}px`
+	}
+}
+
+function handleInput() {
+	resizeTextarea()
 }
 
 async function handleSendMessage() {
@@ -75,10 +105,18 @@ async function handleSendMessage() {
 		selectedFile.value = null
 		if (fileInput.value) fileInput.value.value = ''
 
+		resizeTextarea()
 		scrollToBottom()
 	} catch (e) {
 		console.error(e)
 		toast.error('Не удалось отправить сообщение')
+	}
+}
+
+function handleKeydown(e: KeyboardEvent) {
+	if (e.key === 'Enter' && !e.shiftKey) {
+		e.preventDefault()
+		handleSendMessage()
 	}
 }
 
@@ -96,7 +134,6 @@ function removeFile() {
 
 async function handleCreateChat() {
 	if (!newChatEmail.value) return
-
 	try {
 		await store.createPrivateChat(newChatEmail.value)
 		isCreateChatOpen.value = false
@@ -125,19 +162,26 @@ function getInitials(name?: string) {
 function formatTime(dateStr: string) {
 	return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
+
+function getFileUrl(path: string) {
+	if (!path) return ''
+	if (path.startsWith('http')) return path
+	const base = apiUrl.replace(/\/$/, '')
+	const relative = path.replace(/^\//, '')
+	return `${base}/${relative}`
+}
 </script>
 
 <template>
 	<div class="flex h-screen w-full bg-background overflow-hidden">
-		<aside class="w-80 border-r flex flex-col bg-muted/10">
-			<div class="p-4 border-b flex items-center justify-between">
-				<h2 class="font-semibold text-lg">Чаты</h2>
-
+		<aside class="w-80 border-r flex flex-col bg-card/30 shrink-0">
+			<div class="p-4 border-b flex items-center justify-between h-16 shrink-0">
+				<h2 class="font-semibold text-lg tracking-tight">Чаты</h2>
 				<div class="flex gap-1">
 					<Dialog v-model:open="isCreateChatOpen">
 						<DialogTrigger as-child>
-							<Button variant="ghost" size="icon" title="Создать чат">
-								<PlusIcon class="w-5 h-5 text-muted-foreground hover:text-primary" />
+							<Button variant="ghost" size="icon" title="Создать чат" class="h-8 w-8">
+								<PlusIcon class="w-5 h-5" />
 							</Button>
 						</DialogTrigger>
 						<DialogContent class="sm:max-w-[425px]">
@@ -163,9 +207,8 @@ function formatTime(dateStr: string) {
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>
-
-					<Button variant="ghost" size="icon" @click="handleLogout" title="Выйти">
-						<LogOut class="w-5 h-5 text-muted-foreground hover:text-destructive" />
+					<Button variant="ghost" size="icon" @click="handleLogout" title="Выйти" class="h-8 w-8">
+						<LogOut class="w-4 h-4 text-muted-foreground hover:text-destructive" />
 					</Button>
 				</div>
 			</div>
@@ -177,18 +220,23 @@ function formatTime(dateStr: string) {
 						:key="chat.id"
 						@click="store.selectChat(chat.id)"
 						:class="[
-							'flex items-center gap-3 p-3 rounded-lg text-left transition-colors text-sm font-medium',
+							'flex items-center gap-3 p-3 rounded-lg text-left transition-all duration-200',
 							store.activeChatId === chat.id
-								? 'bg-primary text-primary-foreground'
-								: 'hover:bg-muted text-muted-foreground hover:text-foreground',
+								? 'bg-secondary text-secondary-foreground shadow-sm'
+								: 'hover:bg-muted/50 text-muted-foreground hover:text-foreground',
 						]"
 					>
-						<Avatar class="w-10 h-10 border bg-background">
-							<AvatarFallback class="text-foreground">{{ getInitials(chat.name) }}</AvatarFallback>
+						<Avatar class="w-10 h-10 border shadow-sm">
+							<AvatarFallback class="bg-background text-foreground/80 text-xs font-medium">
+								{{ getInitials(chat.name) }}
+							</AvatarFallback>
 						</Avatar>
-						<div class="truncate">
-							{{ chat.name || 'Без названия' }}
-							<div class="text-xs opacity-70 font-normal">
+						<div class="flex-1 min-w-0">
+							<div class="font-medium text-sm truncate leading-none mb-1">
+								{{ chat.name || 'Без названия' }}
+							</div>
+							<div class="text-[11px] opacity-70 font-normal flex items-center gap-1">
+								<span :class="chat.isGlobal ? 'text-blue-500' : 'text-green-500'">●</span>
 								{{ chat.isGlobal ? 'Глобальный' : 'Личный' }}
 							</div>
 						</div>
@@ -197,144 +245,201 @@ function formatTime(dateStr: string) {
 			</ScrollArea>
 		</aside>
 
-		<main class="flex-1 flex flex-col relative">
+		<main class="flex-1 flex flex-col h-full overflow-hidden relative min-w-0 bg-background">
 			<header
 				v-if="store.activeChat"
-				class="h-16 border-b flex items-center px-6 bg-background/50 backdrop-blur sticky top-0 z-10"
+				class="h-16 border-b shrink-0 flex items-center px-6 bg-background/80 backdrop-blur z-20"
 			>
 				<div class="flex items-center gap-3">
-					<Avatar>
-						<AvatarFallback>{{ getInitials(store.activeChat.name) }}</AvatarFallback>
+					<Avatar class="h-9 w-9 border">
+						<AvatarFallback class="bg-primary/10 text-primary text-xs">
+							{{ getInitials(store.activeChat.name) }}
+						</AvatarFallback>
 					</Avatar>
 					<div>
-						<h3 class="font-semibold leading-none">{{ store.activeChat.name }}</h3>
-						<span v-if="!store.isConnected" class="text-xs text-destructive animate-pulse"
-							>Переподключение...</span
-						>
-						<span v-else class="text-xs text-muted-foreground">Online</span>
+						<h3 class="font-semibold text-sm leading-none mb-1">{{ store.activeChat.name }}</h3>
+						<div class="flex items-center gap-1.5">
+							<span class="relative flex h-2 w-2" v-if="store.isConnected">
+								<span
+									class="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
+								></span>
+								<span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+							</span>
+							<span v-else class="h-2 w-2 rounded-full bg-destructive"></span>
+							<span class="text-xs text-muted-foreground font-medium">
+								{{ store.isConnected ? 'Online' : 'Reconnecting...' }}
+							</span>
+						</div>
 					</div>
 				</div>
 			</header>
 
 			<div
-				v-else
-				class="flex-1 flex items-center justify-center text-muted-foreground flex-col gap-2"
+				v-if="!store.activeChat"
+				class="flex-1 flex items-center justify-center text-muted-foreground flex-col gap-4 p-8 text-center"
 			>
-				<div class="text-4xl">👋</div>
-				<p>Выберите чат или создайте новый</p>
+				<div class="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+					<AudioWaveformIcon :size="34" />
+				</div>
+				<div>
+					<h3 class="font-semibold text-lg text-foreground">Добро пожаловать</h3>
+					<p class="text-sm">Выберите чат из списка или создайте новый для начала общения</p>
+				</div>
 			</div>
 
-			<ScrollArea v-if="store.activeChat" class="flex-1 p-4">
-				<div class="flex flex-col gap-4 max-w-3xl mx-auto pb-4">
+			<div
+				v-if="store.activeChat"
+				ref="scrollContainerRef"
+				class="flex-1 overflow-y-auto min-h-0 p-4 custom-scrollbar scroll-smooth"
+			>
+				<div class="flex flex-col gap-6 max-w-4xl mx-auto pb-2">
 					<div
 						v-for="msg in store.messages"
 						:key="msg.id"
 						:class="[
-							'flex gap-3 max-w-[80%]',
+							'flex gap-3 max-w-[85%]',
 							msg.senderEmail === myEmail ? 'self-end flex-row-reverse' : 'self-start',
 						]"
 					>
-						<Avatar v-if="msg.senderEmail !== myEmail" class="w-8 h-8 mt-1">
-							<AvatarFallback class="text-xs">{{ getInitials(msg.senderEmail) }}</AvatarFallback>
+						<Avatar v-if="msg.senderEmail !== myEmail" class="w-8 h-8 mt-auto shrink-0 border">
+							<AvatarFallback class="text-[10px] bg-muted">{{
+								getInitials(msg.senderEmail)
+							}}</AvatarFallback>
 						</Avatar>
 
 						<div
 							:class="[
-								'rounded-2xl px-4 py-2 text-sm shadow-sm relative group',
+								'flex flex-col shadow-sm border relative overflow-hidden min-w-[60px]',
 								msg.senderEmail === myEmail
-									? 'bg-primary text-primary-foreground rounded-tr-sm'
-									: 'bg-muted text-foreground rounded-tl-sm',
+									? 'bg-primary text-primary-foreground rounded-2xl rounded-br-none border-primary/20'
+									: 'bg-card text-card-foreground rounded-2xl rounded-bl-none border-border',
 							]"
 						>
 							<div
 								v-if="msg.senderEmail !== myEmail && store.activeChat.isGlobal"
-								class="text-[10px] opacity-50 mb-1 font-bold"
+								class="px-3 pt-2 text-[10px] opacity-70 font-bold uppercase tracking-wider"
 							>
-								{{ msg.senderEmail }}
+								{{ msg.senderEmail || 'Unknown' }}
 							</div>
 
-							<div v-if="msg.fileUrl" class="mb-2 mt-1">
-								<img
-									v-if="msg.fileUrl.match(/\.(jpeg|jpg|gif|png)$/i)"
-									:src="`${apiUrl}${msg.fileUrl}`"
-									class="rounded-md max-w-[200px] max-h-[200px] object-cover border cursor-pointer hover:opacity-90"
-									@click="openFile(`${apiUrl}${msg.fileUrl}`)"
-								/>
-								<a
-									v-else
-									:href="`${apiUrl}${msg.fileUrl}`"
-									target="_blank"
-									class="flex items-center gap-2 bg-background/20 p-2 rounded hover:bg-background/30 transition-colors border border-transparent hover:border-border"
+							<div class="p-3">
+								<div v-if="msg.fileUrl" class="mb-2">
+									<div
+										v-if="msg.fileUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)"
+										class="relative group"
+									>
+										<img
+											:src="getFileUrl(msg.fileUrl)"
+											class="rounded-lg object-contain bg-black/5 dark:bg-white/5 cursor-zoom-in block"
+											style="max-height: 350px; width: auto; max-width: 100%"
+											alt="Attachment"
+											loading="lazy"
+											@click="openFile(getFileUrl(msg.fileUrl))"
+											@load="handleImageLoad"
+										/>
+									</div>
+
+									<a
+										v-else
+										:href="getFileUrl(msg.fileUrl)"
+										target="_blank"
+										class="flex items-center gap-3 bg-background/50 p-3 rounded-lg hover:bg-background/80 transition-colors border border-border/50 group"
+									>
+										<div
+											class="p-2 rounded-full bg-primary/10 text-primary group-hover:bg-primary/20"
+										>
+											<FileIcon class="w-4 h-4" />
+										</div>
+										<div class="flex-1 overflow-hidden">
+											<div class="text-xs font-medium truncate opacity-90">Файл вложения</div>
+											<div class="text-[10px] opacity-60">Нажмите чтобы скачать</div>
+										</div>
+										<Download class="w-4 h-4 opacity-50" />
+									</a>
+								</div>
+
+								<p
+									v-if="msg.text"
+									class="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed"
 								>
-									<FileIcon class="w-4 h-4" />
-									<span class="underline underline-offset-2">Скачать файл</span>
-								</a>
+									{{ msg.text }}
+								</p>
 							</div>
 
-							<p class="whitespace-pre-wrap wrap-break-word leading-relaxed">{{ msg.text }}</p>
-
-							<div
-								:class="[
-									'text-[10px] text-right mt-1 opacity-60',
-									msg.senderEmail === myEmail ? 'text-primary-foreground' : 'text-muted-foreground',
-								]"
-							>
+							<div class="px-3 pb-1.5 text-[10px] text-right opacity-60 select-none font-medium">
 								{{ formatTime(msg.createdAt) }}
 							</div>
 						</div>
 					</div>
 
-					<div ref="messagesEndRef" class="h-1"></div>
+					<div ref="messagesEndRef" class="h-px w-full"></div>
 				</div>
-			</ScrollArea>
+			</div>
 
-			<div v-if="store.activeChat" class="p-4 bg-background border-t">
-				<div class="max-w-3xl mx-auto">
+			<div v-if="store.activeChat" class="shrink-0 p-4 bg-background border-t z-20">
+				<div class="max-w-4xl mx-auto">
 					<div
 						v-if="selectedFile"
-						class="flex items-center gap-2 mb-2 p-2 bg-muted/50 rounded-md w-fit border text-xs"
+						class="flex items-center gap-3 mb-3 p-2 bg-muted/40 rounded-lg w-fit border shadow-sm animate-in slide-in-from-bottom-2 fade-in duration-200"
 					>
-						<FileIcon class="w-4 h-4 text-blue-500" />
-						<span class="max-w-[200px] truncate font-medium">{{ selectedFile.name }}</span>
+						<div class="w-8 h-8 rounded bg-background flex items-center justify-center border">
+							<FileIcon class="w-4 h-4 text-blue-500" />
+						</div>
+						<div class="flex flex-col">
+							<span class="text-xs font-medium max-w-[200px] truncate">{{
+								selectedFile.name
+							}}</span>
+							<span class="text-[10px] text-muted-foreground"
+								>{{ (selectedFile.size / 1024).toFixed(1) }} KB</span
+							>
+						</div>
 						<Button
 							variant="ghost"
 							size="icon"
-							class="h-5 w-5 ml-2 hover:bg-destructive/10 hover:text-destructive"
+							class="h-6 w-6 ml-1 hover:bg-destructive/10 hover:text-destructive rounded-full"
 							@click="removeFile"
 						>
 							<X class="w-3 h-3" />
 						</Button>
 					</div>
 
-					<form @submit.prevent="handleSendMessage" class="flex gap-2 items-end">
+					<div class="flex gap-2 items-end">
 						<input type="file" ref="fileInput" class="hidden" @change="handleFileSelect" />
 
 						<Button
 							type="button"
 							variant="outline"
 							size="icon"
-							class="shrink-0"
+							class="shrink-0 h-[42px] w-[42px] rounded-xl"
 							@click="fileInput?.click()"
 							title="Прикрепить файл"
 						>
 							<Paperclip class="w-5 h-5 text-muted-foreground" />
 						</Button>
 
-						<Input
-							v-model="messageText"
-							placeholder="Напишите сообщение..."
-							class="flex-1 min-h-10"
-							:disabled="!store.isConnected"
-						/>
+						<div class="flex-1 relative">
+							<textarea
+								ref="textareaRef"
+								v-model="messageText"
+								rows="1"
+								placeholder="Напишите сообщение..."
+								class="flex w-full rounded-xl border border-input bg-transparent px-4 py-2.5 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 min-h-[42px] max-h-[150px] resize-none overflow-y-auto custom-scrollbar leading-relaxed"
+								:disabled="!store.isConnected"
+								@input="handleInput"
+								@keydown="handleKeydown"
+							></textarea>
+						</div>
 
 						<Button
 							type="submit"
 							size="icon"
-							:disabled="(!messageText && !selectedFile) || !store.isConnected"
+							class="shrink-0 h-[42px] w-[42px] rounded-xl transition-all active:scale-95"
+							:disabled="(!messageText.trim() && !selectedFile) || !store.isConnected"
+							@click="handleSendMessage"
 						>
-							<SendHorizontal class="w-5 h-5" />
+							<SendHorizontal class="w-5 h-5 ml-0.5" />
 						</Button>
-					</form>
+					</div>
 				</div>
 			</div>
 		</main>
