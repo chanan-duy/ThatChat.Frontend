@@ -31,6 +31,7 @@ export class AuthService {
 	public login = async (dto: LoginRequestDto): Promise<LoginResponseDto> => {
 		const { data } = await this.ax.post<LoginResponseDto>('/login', dto)
 		this.setTokens(data)
+		localStorage.setItem('__userEmail', dto.email) // I know, I know
 		this.isLoggedIn.value = true
 		return data
 	}

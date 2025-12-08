@@ -8,6 +8,6 @@ import 'vue-sonner/style.css'
 	<div>
 		<RouterView />
 
-		<Toaster />
+		<Toaster position="top-center" />
 	</div>
 </template>

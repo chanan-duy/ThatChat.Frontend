@@ -17,6 +17,7 @@ import { auth } from '@/services/authService'
 import { useChatStore } from '@/stores/chatStore'
 import {
 	AudioWaveformIcon,
+	CircleDot,
 	Download,
 	FileIcon,
 	LogOut,
@@ -40,7 +41,7 @@ const selectedFile = ref<File | null>(null)
 const messagesEndRef = ref<HTMLDivElement | null>(null)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
-const myEmail = localStorage.getItem('userEmail') || ''
+const myEmail = localStorage.getItem('__userEmail') || '' // I know, I know
 const isCreateChatOpen = ref(false)
 const newChatEmail = ref('')
 
@@ -160,7 +161,11 @@ function getInitials(name?: string) {
 }
 
 function formatTime(dateStr: string) {
-	return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+	return new Date(dateStr).toLocaleTimeString([], {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false,
+	})
 }
 
 function getFileUrl(path: string) {
@@ -236,7 +241,11 @@ function getFileUrl(path: string) {
 								{{ chat.name || 'Без названия' }}
 							</div>
 							<div class="text-[11px] opacity-70 font-normal flex items-center gap-1">
-								<span :class="chat.isGlobal ? 'text-blue-500' : 'text-green-500'">●</span>
+								<CircleDot
+									:class="chat.isGlobal ? 'text-blue-500' : 'text-green-500'"
+									fill="currentColor"
+									class="w-2 h-2"
+								/>
 								{{ chat.isGlobal ? 'Глобальный' : 'Личный' }}
 							</div>
 						</div>
@@ -258,18 +267,6 @@ function getFileUrl(path: string) {
 					</Avatar>
 					<div>
 						<h3 class="font-semibold text-sm leading-none mb-1">{{ store.activeChat.name }}</h3>
-						<div class="flex items-center gap-1.5">
-							<span class="relative flex h-2 w-2" v-if="store.isConnected">
-								<span
-									class="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
-								></span>
-								<span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-							</span>
-							<span v-else class="h-2 w-2 rounded-full bg-destructive"></span>
-							<span class="text-xs text-muted-foreground font-medium">
-								{{ store.isConnected ? 'Online' : 'Reconnecting...' }}
-							</span>
-						</div>
 					</div>
 				</div>
 			</header>
@@ -281,7 +278,7 @@ function getFileUrl(path: string) {
 				<div class="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
 					<AudioWaveformIcon :size="34" />
 				</div>
-				<div>
+				<div class="flex flex-col gap-2">
 					<h3 class="font-semibold text-lg text-foreground">Добро пожаловать</h3>
 					<p class="text-sm">Выберите чат из списка или создайте новый для начала общения</p>
 				</div>
@@ -290,7 +287,7 @@ function getFileUrl(path: string) {
 			<div
 				v-if="store.activeChat"
 				ref="scrollContainerRef"
-				class="flex-1 overflow-y-auto min-h-0 p-4 custom-scrollbar scroll-smooth"
+				class="flex-1 overflow-y-auto min-h-0 scroll-smooth"
 			>
 				<div class="flex flex-col gap-6 max-w-4xl mx-auto pb-2">
 					<div
@@ -302,9 +299,9 @@ function getFileUrl(path: string) {
 						]"
 					>
 						<Avatar v-if="msg.senderEmail !== myEmail" class="w-8 h-8 mt-auto shrink-0 border">
-							<AvatarFallback class="text-[10px] bg-muted">{{
-								getInitials(msg.senderEmail)
-							}}</AvatarFallback>
+							<AvatarFallback class="text-[10px] bg-muted">
+								{{ getInitials(msg.senderEmail) }}
+							</AvatarFallback>
 						</Avatar>
 
 						<div
@@ -317,7 +314,7 @@ function getFileUrl(path: string) {
 						>
 							<div
 								v-if="msg.senderEmail !== myEmail && store.activeChat.isGlobal"
-								class="px-3 pt-2 text-[10px] opacity-70 font-bold uppercase tracking-wider"
+								class="px-3 pt-2 text-[10px] text-primary/70 font-bold"
 							>
 								{{ msg.senderEmail || 'Unknown' }}
 							</div>
@@ -343,18 +340,28 @@ function getFileUrl(path: string) {
 										v-else
 										:href="getFileUrl(msg.fileUrl)"
 										target="_blank"
-										class="flex items-center gap-3 bg-background/50 p-3 rounded-lg hover:bg-background/80 transition-colors border border-border/50 group"
+										class="flex items-center gap-3 p-3 rounded-lg transition-colors border group"
+										:class="
+											msg.senderEmail === myEmail
+												? 'bg-primary-foreground/10 hover:bg-primary-foreground/20 border-primary-foreground/20'
+												: 'bg-background/50 hover:bg-background/80 border-border/50'
+										"
 									>
 										<div
-											class="p-2 rounded-full bg-primary/10 text-primary group-hover:bg-primary/20"
+											class="p-2 rounded-full transition-colors"
+											:class="
+												msg.senderEmail === myEmail
+													? 'bg-primary-foreground/10 text-primary-foreground'
+													: 'bg-primary/10 text-primary group-hover:bg-primary/20'
+											"
 										>
 											<FileIcon class="w-4 h-4" />
 										</div>
 										<div class="flex-1 overflow-hidden">
-											<div class="text-xs font-medium truncate opacity-90">Файл вложения</div>
-											<div class="text-[10px] opacity-60">Нажмите чтобы скачать</div>
+											<div class="text-xs font-medium truncate">Файл вложения</div>
+											<div class="text-[10px] opacity-70">Нажмите чтобы скачать</div>
 										</div>
-										<Download class="w-4 h-4 opacity-50" />
+										<Download class="w-4 h-4 opacity-70" />
 									</a>
 								</div>
 
@@ -423,7 +430,7 @@ function getFileUrl(path: string) {
 								v-model="messageText"
 								rows="1"
 								placeholder="Напишите сообщение..."
-								class="flex w-full rounded-xl border border-input bg-transparent px-4 py-2.5 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 min-h-[42px] max-h-[150px] resize-none overflow-y-auto custom-scrollbar leading-relaxed"
+								class="flex w-full rounded-xl border border-input bg-transparent px-4 py-2.5 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 min-h-[42px] max-h-[150px] resize-none overflow-y-auto leading-relaxed"
 								:disabled="!store.isConnected"
 								@input="handleInput"
 								@keydown="handleKeydown"
