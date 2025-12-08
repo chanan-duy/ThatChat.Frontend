@@ -126,4 +126,26 @@
 	body {
 		@apply bg-background text-foreground selection:bg-selection selection:text-selection-foreground;
 	}
+	::-webkit-scrollbar {
+		width: 6px;
+		height: 6px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background-color: var(--border);
+		border-radius: 9999px;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background-color: var(--muted-foreground);
+	}
+
+	html {
+		scrollbar-width: thin;
+		scrollbar-color: var(--border) transparent;
+	}
 }
