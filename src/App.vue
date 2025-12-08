@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import { Toaster } from '@/components/ui/sonner'
 </script>
 
 <template>
-  <header>
-    <div class="wrapper">
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
+	<header>
+		<div class="wrapper">
+			<nav>
+				<RouterLink to="/">Home</RouterLink>
+			</nav>
+		</div>
+	</header>
 
-  <RouterView />
+	<RouterView />
+
+	<Toaster />
 </template>
