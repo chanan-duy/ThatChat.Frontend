@@ -17,10 +17,11 @@ export default defineConfigWithVueTs(
   },
 
   globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['app/components/ui/**/*'], 'Ignore Shadcn Ui Components'),
 
   pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
-  
+
   {
     ...pluginVitest.configs.recommended,
     files: ['src/**/__tests__/*'],
