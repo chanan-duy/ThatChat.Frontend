@@ -9,6 +9,17 @@ export default mergeConfig(
 			environment: 'jsdom',
 			exclude: [...configDefaults.exclude, 'e2e/**'],
 			root: fileURLToPath(new URL('./', import.meta.url)),
+
+			setupFiles: ['allure-vitest/setup'],
+			reporters: [
+				'verbose',
+				[
+					'allure-vitest/reporter',
+					{
+						resultsDir: 'allure-results',
+					},
+				],
+			],
 		},
 	}),
 )
