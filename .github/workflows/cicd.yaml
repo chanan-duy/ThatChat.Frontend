@@ -5,6 +5,9 @@ on:
     branches: ['main']
   workflow_dispatch:
 
+env:
+  VITE_API_URL: 'http://localhost:5042' # for example
+
 jobs:
   build-test-lint:
     name: Build & Test & Lint
