@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { auth } from '@/services/authService'
 import { useChatStore } from '@/stores/chatStore'
+import { isAxiosError } from 'axios'
 import {
 	AudioWaveformIcon,
 	CircleDot,
@@ -110,7 +111,9 @@ async function handleSendMessage() {
 		scrollToBottom()
 	} catch (e) {
 		console.error(e)
-		toast.error('Не удалось отправить сообщение')
+		toast.error('Не удалось отправить сообщение', {
+			description: `${e}\n${(isAxiosError(e) && e.response?.data) || ''}`,
+		})
 	}
 }
 
