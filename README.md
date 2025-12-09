@@ -1,54 +1,51 @@
 # ThatChat.Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+Фронтовая часть
 
-## Recommended IDE Setup
+Без запущенного бэка будет выдавать ошибки
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+Структура:
 
-## Recommended Browser Setup
+- `src/components` - компоненты
+- `src/components/ui` - компоненты shadcn-vue (отдельная ui ~библиотека)
+- `src/components/chat` - vue компоненты чата
+- `src/composables` - composables (отделённая логика от vue компонентов, помогает при тестировании)
+- `src/lib` - разное
+- `src/router` - роуты (vue-router)
+- `src/services` - сервисы. Тут api и auth api
+- `src/stores` - stores
+- `src/views` - vue компоненты страниц
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+По тестам. Они находятся прямо с компонентами тестирования в папках `*/tests/*.spec.ts`
 
-## Type Support for `.vue` Imports in TS
+Установить зависимости (npm должен быть установлен):
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
+```bash
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+Secretes (`.env`) (пример в `.env.example`, можно переименовать в `.env` и запускать):
 
-```sh
+```dotenv
+VITE_API_URL=http://localhost:5042
+```
+
+Запустить тесты ручками:
+
+```bash
+npm run test:run
+```
+
+Запустить dev проект:
+
+```bash
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+Запустить build:
 
-```sh
+```bash
 npm run build
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+Ну и тд, и тп.
