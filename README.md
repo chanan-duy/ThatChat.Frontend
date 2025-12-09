@@ -2,6 +2,8 @@
 
 Фронтовая часть
 
+Бэк [тут](https://github.com/chanan-duy/ThatChat.Backend)
+
 Без запущенного бэка будет выдавать ошибки
 
 Структура:
@@ -17,6 +19,8 @@
 - `src/views` - vue компоненты страниц
 
 По тестам. Они находятся прямо с компонентами тестирования в папках `*/tests/*.spec.ts`
+
+Используется `allure-report` и в [CI/CD](.github/workflows/cicd.yaml) тесты выгружаются на https://chanan-duy.github.io/ThatChat.Frontend
 
 Установить зависимости (npm должен быть установлен):
 
