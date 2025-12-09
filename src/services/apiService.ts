@@ -1,4 +1,5 @@
-import axios, { type AxiosInstance } from 'axios'
+import axios, { isAxiosError, type AxiosInstance } from 'axios'
+import { toast } from 'vue-sonner'
 import { auth, type AuthService } from './authService'
 
 const ApiBase: string = import.meta.env.VITE_API_URL || 'http://localhost:5042'
@@ -24,6 +25,24 @@ export class ApiService {
 	constructor(authService: AuthService) {
 		this.auth = authService
 		auth.addAxiosInterceptor(this.ax)
+
+		this.ax.interceptors.response.use(
+			function onFulfilled(response) {
+				return response
+			},
+			function onRejected(error) {
+				if (isAxiosError(error)) {
+					if (error.code === 'ERR_NETWORK') {
+						toast.error('Ошибка при отправке запроса на сервер', {
+							description: 'Проверьте подключение к интернету. Или возможно сервер недоступен.',
+							duration: Infinity,
+						})
+					}
+				}
+
+				return Promise.reject(error)
+			},
+		)
 	}
 
 	public async getChats(): Promise<ChatDto[]> {
