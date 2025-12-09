@@ -68,15 +68,15 @@ watch(
 		messageText.value = ''
 		resizeTextarea()
 		await nextTick()
-		scrollToBottom(false)
+		scrollToBottom()
 	},
 )
 
-function scrollToBottom(smooth = true) {
+function scrollToBottom() {
 	if (!messagesEndRef.value) return
 
 	messagesEndRef.value.scrollIntoView({
-		behavior: smooth ? 'smooth' : 'instant',
+		behavior: 'instant',
 		block: 'end',
 	})
 }
