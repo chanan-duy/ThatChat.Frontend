@@ -1,4 +1,4 @@
-import { api, type ChatDto, type MessageDto } from '@/services/apiService'
+import { api, type ChatDto, type MessageDto as ChatMessageDto } from '@/services/apiService'
 import { auth } from '@/services/authService'
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { defineStore } from 'pinia'
@@ -7,7 +7,7 @@ import { computed, ref } from 'vue'
 export const useChatStore = defineStore('chat', () => {
 	const chats = ref<ChatDto[]>([])
 	const activeChatId = ref<string | null>(null)
-	const messages = ref<MessageDto[]>([])
+	const messages = ref<ChatMessageDto[]>([])
 	const isConnected = ref(false)
 
 	let hubConnection: HubConnection | null = null
@@ -42,10 +42,20 @@ export const useChatStore = defineStore('chat', () => {
 			.configureLogging(LogLevel.Information)
 			.build()
 
-		hubConnection.on('ReceiveChatMessage', (msg: MessageDto) => {
+		hubConnection.on('ReceiveChatMessage', (msg: ChatMessageDto) => {
 			if (msg.chatId === activeChatId.value) {
 				messages.value.push(msg)
 			}
+		})
+
+		hubConnection.on('ReceiveNewChat', (msg: ChatDto) => {
+			if (chats.value.find((c) => c.id === msg.id)) {
+				return
+			}
+
+			console.log('asdfsadfasdf')
+
+			chats.value.push(msg)
 		})
 
 		try {
