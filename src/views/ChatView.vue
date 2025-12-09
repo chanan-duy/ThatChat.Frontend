@@ -126,7 +126,13 @@ function handleKeydown(e: KeyboardEvent) {
 
 function handleFileSelect(event: Event) {
 	const target = event.target as HTMLInputElement
+
 	if (target.files && target.files.length > 0) {
+		const file = target.files[0]!
+		if (file.size > 20 * 1024 * 1024) {
+			toast.error('Файл слишком большой (максимум 20 МБ)')
+			return
+		}
 		selectedFile.value = target.files[0] || null
 	}
 }
