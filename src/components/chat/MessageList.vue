@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { MessageDto } from '@/services/apiService'
-import { nextTick, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import MessageBubble from './MessageBubble.vue'
 
 const props = defineProps<{
@@ -18,6 +18,11 @@ function scrollToBottom() {
 		block: 'end',
 	})
 }
+
+onMounted(async () => {
+	await nextTick()
+	scrollToBottom()
+})
 
 watch(
 	() => props.messages.length,
