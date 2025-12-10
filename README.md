@@ -2,9 +2,13 @@
 
 ## Фронтовая часть
 
-Бэк [тут](https://github.com/chanan-duy/ThatChat.Backend)
+- Бэк [тут](https://github.com/chanan-duy/ThatChat.Backend)
 
-Без запущенного бэка будет выдавать ошибки
+- Без запущенного бэка будет выдавать ошибки
+
+- Реализован простенький [CI/CD](.github/workflows/cicd.yaml) пайплайн, который тестит, компилирует (чисто для проверки) и линтит
+
+- Тесты выгружаются на https://chanan-duy.github.io/ThatChat.Frontend
 
 ### Структура:
 
